@@ -17,7 +17,7 @@ struct yx
 	}
 };
 
-yx ES;
+yx ES(-1,-1);
 
 void displayParkingLayout(string *value,int n)
 {
@@ -42,12 +42,7 @@ void displayParkingLayout(string *value,int n)
 		printf("-----|\n");
 	}
 	printf("\n");
-	/*
-	printf("|");
-	for(int i = 0 ;i<n-1;i++)
-		printf("-----+");
-	printf("-----|\n");
-	 */}
+}
 
 struct yx findNextAvilSlot(string *slot,int n,int data)
 {
@@ -60,11 +55,39 @@ struct yx findNextAvilSlot(string *slot,int n,int data)
 			}
 }
 
+bool isSlotSafe(string *slot,int n, yx obj)
+{
+
+	int X1 = obj.x;
+	int Y1 = obj.y;
+
+	int K = 0;
+	for(int j = 0;j<n-1;j++)
+	{
+		if(!(slot + Y1*n + j)->compare("  "))
+		{
+			K++;
+		}
+
+	}
+
+	cout<<" Spaces count is "<<K<<endl;
+
+	if(K < 2)
+	{
+		cout<<"Can't adjust to this Bay, Contact Parking Manager "<<endl;
+		return false;
+	}
+
+	return true;
+
+}
+
 yx findCar(string *slot,int n,string data)
 {
 	for(int i = 0; i<n;i++)
 		for(int j = 0;j<n;j++)
-			if(!((slot+i*n +j)->compare("data"))) {
+			if(!((slot+i*n +j)->compare(data))) {
 
 				yx obj(i,j);
 				return obj;
@@ -92,7 +115,7 @@ yx findEmptyinRow(string *slot,int n, int rowNo,int startCol)
 }
 yx findEmptyinCol(string *slot,int n, int colNo,int startRow)
 {
-	for(int j = startRow ;j<n;j++)
+	for(int j = startRow ;j<n-1;j++)
 	{
 		if(!((slot+j*n + colNo)->compare("  "))) {
 
@@ -155,14 +178,22 @@ void performDOWN(string *slot,int n,yx es)
 {
 	yx ptemp = es;
 	es.y = es.y + 1;
-	if(!((slot + es.y*n + es.x)->compare("  "))) {
+	ES = es;
+	if(!((slot + es.y*n + es.x)->compare("  "))) // No swap will happen
+	{
 		return;
 	}
+
+	/*if(!isSlotSafe((string *)slot,n,ptemp)) // No swap will happen as slot will full if swap;
+	{
+		return false;
+	}*/
 	*(slot + ptemp.y*n + ptemp.x) = *(slot + es.y*n + es.x);
 	*(slot + es.y*n + es.x) = "  ";
 
 	ES = es;
 	cout<<" DOWN ";
+	return ;
 }
 
 void Retrive(string *slot,int n,string data)
@@ -177,7 +208,8 @@ void Retrive(string *slot,int n,string data)
 		return;
 	}
 
-	for(int i = Y ; i<n-1;i++)
+	cout<<" Car found at row = "<<Y<<" col = "<<X<<endl;
+	for(int i = Y+1 ; i<n-1;i++)
 	{
 		yx tm = findEmptyinRow(slot,n,i,X);
 		if(tm.x != -1)
@@ -214,6 +246,127 @@ void Retrive(string *slot,int n,string data)
 		performUP(slot,n,es);
 	}
 
+	// Now it can swap from bay
+
+
+	yx es(n-1,X);
+	performUP(slot,n,es);
+
+
+	displayParkingLayout((string *)slot,n);
+
+	*(slot + es.y*n + es.x) = "  ";
+
+}
+
+bool getMeSafeSlot(string *slot,int n, yx *obj, int colNo)
+{
+
+
+	int X1 = obj->x;
+	int Y1 = obj->y;
+
+
+
+	for(int row = 1 ;row <n-1 ; row++)
+	{
+		int K = 0;
+		for(int j = 0;j<n-1;j++)
+		{
+			if(!(slot + row*n + j)->compare("  "))
+			{
+				K++;
+			}
+
+		}
+
+		if(K < 2)
+		{
+			// continue for next
+		}
+		else
+		{
+			obj->y = row;
+			obj->x = colNo;
+
+			return true;
+		}
+
+	}
+
+	return false; // No safe Slot
+
+}
+
+bool isCarParked(string *slot,int n)
+{
+
+
+	bool flag = false;
+	int K = 0;
+	for(int row = 0 ;row <n-1 ; row++)
+	{
+		for(int j = 0;j<n-1;j++)
+		{
+			if(!(slot + row*n + j)->compare("  "))
+			{
+				K++;
+			}
+
+		}
+	}
+
+	if(K == (n-1)*(n-1))
+	{
+		cout<<" NO CAR HAS PARKED "<<endl;
+		return false;
+	}
+	else
+		return true;
+
+}
+bool getMeFreeBay(string *slot,int n)
+{
+	bool flag = false;
+	for(int row = 0 ;row <n-1 ; row++)
+	{
+		int K = 0;
+		int B = -1;
+		bool flag = false;
+		for(int j = 0;j<n;j++)
+		{
+			if(!(slot + row*n + j)->compare("  "))
+			{
+				K++;
+				if(!flag)
+				{
+					B = j;
+					flag = true;
+				}
+			}
+
+		}
+
+		if(K < 2)
+		{
+			// continue for next
+		}
+		else
+		{
+			flag = true;
+
+
+			cout<<" BAY "<<(B+1);
+		}
+
+	}
+	if(flag)
+		cout<<" HAS FREE SPACES "<<endl;
+	else
+		cout<<" NO PARKING SPACES AVAILABLE"<<endl;
+
+	return flag;
+
 }
 
 void park(string *slot,int n,string data,int BayNo)
@@ -229,73 +382,130 @@ void park(string *slot,int n,string data,int BayNo)
 		return;
 	}
 
-	for(int i = obj.x ; i<n-1;i++)
+	cout<<" Empty in Column is at row no : "<<Y<<endl;
+
+	for(int i = Y ; i<n-1;i++)
 	{
-		yx es(BayNo,i);
+		yx es(i,BayNo);
+
+
+		if(!isSlotSafe(slot,n,es)) continue;
+
 		performDOWN(slot,n,es);
 
 	}
 
 	yx obj1 = findEmptyinCol(slot,n,BayNo,0);
 
-	int X1 = obj1.x;
-	int Y1 = obj1.y;
-
-	for(int j = Y1;j<n-1;j++)
+	cout<<" Current Empty Space is at row = "<<ES.y<<" col = "<<ES.x<<endl;
+	if(ES.y == -1 && ES.x == -1)
 	{
-		yx es(BayNo,j);
-		performDOWN(slot,n,es);
+		ES.y = 0;
 	}
+
+	if(!(obj1.y == 0))
+	{
+		yx safeSlot(-1,-1);
+		if(getMeSafeSlot(slot,n,&safeSlot,obj1.y))
+		{
+			*(slot+ safeSlot.y*n+BayNo) =  data;
+			return;
+		}
+
+	}
+	else
+	{
+		for(int i = obj1.y;i<n-1;i++)
+		{
+			cout<<" PF UP ";
+		}
+
+		*(slot+(obj1.y)*n+BayNo) =  data;
+
+	}
+
+}
+
+
+void myScenario(string *slot)
+{
+	string puzzle[4][4] = {
+			{"01","04","07","  "},
+			{"02","05","  ","08"},
+			{"03","06","  ","09"},
+			{"  ","  ","  ","  "}};
+
+	for(int i = 0; i<4;i++)
+		for(int j = 0;j<4;j++)
+			*(slot+i*4 +j) = puzzle[i][j];
 
 }
 
 int main()
 {
-	int n = 4;
+	int n = 100;
 	string puzz[n][n];
 
-	scanf("%d",&n);
+	cout<<"Enter size of Parking"<<endl;
+	cin>>n;
 
 	for(int i = 0 ; i<n;i++)
 		for(int j = 0;j<n;j++)
 			puzz[i][j] = "  ";
 
 
+	myScenario((string *)puzz);
+
+	displayParkingLayout((string *)puzz,n);
 	char ch = 'y';
 	while(ch == 'y' || ch == 'Y')
 	{
+
 		cout<<" Press P for Parking R for Retrivel  "<<endl;
 		char option;
 		cin>>option;
 
 		string carNo;
-		int BayNo; // 1-n-1
-		cout<<" Enter Car no "<<endl;
-		cin>>carNo;
+
+
 
 		if(option == 'P')
 		{
-			cout<<" Enter Bay No. "<<endl;
+			if(!getMeFreeBay((string *)puzz,n)) continue;
+
+			int BayNo; // 1-n-1
+			cout<<" Enter Bay No. from 1 to "<<n-1<<endl;
 			cin>>BayNo;
 
+			cout<<" Enter Car no "<<endl;
+			cin>>carNo;
 
-			park((string *)puzz,n,carNo,BayNo);
+			if(BayNo<1 || BayNo >n-1)
+				cout<<"BayNo is not correct "<<endl;
+			else
+				park((string *)puzz,n,carNo,BayNo-1);
 
 		}
 		if(option == 'R')
 		{
+			if(isCarParked((string *)puzz,n))
+			{
+				cout<<" Enter Car no "<<endl;
+				cin>>carNo;
 
-			Retrive((string *)puzz,n,carNo);
+				Retrive((string *)puzz,n,carNo);
+			}
 
 		}
 
-		cout<<"Do you want to continue? Y or N"<<endl;
+
+		displayParkingLayout((string *)puzz,n);
+		cout<<"\n\nDo you want to continue? Y or N"<<endl;
 		cin>>ch;
 
 
 	}
 
 
-	displayParkingLayout((string *)puzz,n);
 }
 
