@@ -2,9 +2,10 @@
 #include <stdio.h>
 #include<iostream>
 #include<string>
+#include <systemc>
 
 using namespace std;
-
+using namespace sc_core;
 struct yx
 {
 	int y;
@@ -54,8 +55,6 @@ void displayParkingLayout(string *value,int n)
 
 bool isSlotSafe(string *slot,int n, yx obj)
 {
-
-	int X1 = obj.x;
 	int Y1 = obj.y;
 
 	int K = 0;
@@ -136,6 +135,8 @@ void performLEFT(string *slot,int n,yx es)
 	ES = es;
 
 	cout<<" LEFT ";
+
+	displayParkingLayout(slot,n);
 }
 void performUP(string *slot,int n,yx es)
 {
@@ -151,6 +152,9 @@ void performUP(string *slot,int n,yx es)
 	ES = es;
 
 	cout<<" UP ";
+
+	displayParkingLayout(slot,n);
+
 }
 
 void performRIGHT(string *slot,int n,yx es)
@@ -166,6 +170,8 @@ void performRIGHT(string *slot,int n,yx es)
 	ES = es;
 
 	cout<<" RIGHT ";
+
+	displayParkingLayout(slot,n);
 }
 
 void performDOWN(string *slot,int n,yx es)
@@ -178,15 +184,13 @@ void performDOWN(string *slot,int n,yx es)
 		return;
 	}
 
-	/*if(!isSlotSafe((string *)slot,n,ptemp)) // No swap will happen as slot will full if swap;
-	{
-		return false;
-	}*/
 	*(slot + ptemp.y*n + ptemp.x) = *(slot + es.y*n + es.x);
 	*(slot + es.y*n + es.x) = "  ";
 
 	ES = es;
 	cout<<" DOWN ";
+
+	displayParkingLayout(slot,n);
 	return ;
 }
 
@@ -202,7 +206,7 @@ void Retrive(string *slot,int n,string data)
 		return;
 	}
 
-	cout<<" Car found at row = "<<Y<<" col = "<<X<<endl;
+	//cout<<" Car found at row = "<<Y<<" col = "<<X<<endl;
 	for(int i = Y+1 ; i<n-1;i++)
 	{
 		yx tm = findEmptyinRow(slot,n,i,X);
@@ -256,9 +260,6 @@ void Retrive(string *slot,int n,string data)
 bool getMeSafeSlot(string *slot,int n, yx *obj, int colNo)
 {
 
-	int X1 = obj->x;
-	int Y1 = obj->y;
-
 
 	for(int row = 1 ;row <n-1 ; row++)
 	{
@@ -284,7 +285,7 @@ bool getMeSafeSlot(string *slot,int n, yx *obj, int colNo)
 
 			if(!(slot + (obj->y)*n + obj->x)->compare("  ")){
 
-				cout<<" SAFE SLOT is "<<obj->y<<" "<<obj->x<<endl;
+				//cout<<" SAFE SLOT is "<<obj->y<<" "<<obj->x<<endl;
 
 				return true;
 			}
@@ -391,7 +392,7 @@ void park(string *slot,int n,string data,int BayNo)
 		return;
 	}
 
-	cout<<" Empty in Column is at row no : "<<Y<<endl;
+	//cout<<" Empty in Column is at row no : "<<Y<<endl;
 
 	for(int i = Y ; i<n-1;i++)
 	{
@@ -402,7 +403,7 @@ void park(string *slot,int n,string data,int BayNo)
 
 	yx obj1 = findEmptyinCol(slot,n,BayNo,0);
 
-	cout<<" Current Empty Space is at row = "<<obj1.y<<" col = "<<obj1.x<<endl;
+	//cout<<" Current Empty Space is at row = "<<obj1.y<<" col = "<<obj1.x<<endl;
 	if(ES.y == -1 && ES.x == -1)
 	{
 		ES.y = 0;
@@ -413,6 +414,23 @@ void park(string *slot,int n,string data,int BayNo)
 		yx safeSlot(-1,-1);
 		if(getMeSafeSlot(slot,n,&safeSlot,BayNo))
 		{
+			for(int i = n-1 ; i>safeSlot.y;i--)
+			{
+				cout<<" PF UP ";
+
+				if((slot+ i*n+BayNo)->compare("  "))
+					cout<<" ! ALARM WRONG IMPLEMENTATION 1"<<endl;
+				else
+				{
+					*(slot+ i*n+BayNo) =  data;
+
+
+					displayParkingLayout(slot,n);
+
+					*(slot+ i*n+BayNo) =  "  ";
+				}
+			}
+
 			*(slot+ safeSlot.y*n+BayNo) =  data;
 			return;
 		}
@@ -423,6 +441,18 @@ void park(string *slot,int n,string data,int BayNo)
 		for(int i = obj1.y;i<n-1;i++)
 		{
 			cout<<" PF UP ";
+
+			if((slot+(n-1 - i)*n+BayNo)->compare("  "))
+				cout<<" ! ALARM WRONG IMPLEMENTATION 2"<<endl;
+			else
+			{
+				*(slot+(n-1 - i)*n+BayNo) =  data;
+
+
+				displayParkingLayout(slot,n);
+
+				*(slot+(n-1 - i)*n+BayNo) =  "  ";
+			}
 		}
 
 		*(slot+(obj1.y)*n+BayNo) =  data;
@@ -431,90 +461,121 @@ void park(string *slot,int n,string data,int BayNo)
 
 }
 
+#define MAX 20
+SC_MODULE(Process_ParkingMgmt){
 
-void myScenario(string *slot)
-{
-	string puzzle[4][4] = {
-			{"01","04","07","  "},
-			{"02","05","  ","08"},
-			{"03","06","  ","09"},
-			{"  ","  ","  ","  "}};
+	int n;
+	string puzz[MAX][MAX];
 
-	for(int i = 0; i<4;i++)
-		for(int j = 0;j<4;j++)
-			*(slot+i*4 +j) = puzzle[i][j];
-
-}
-
-int main()
-{
-	int n = 20;
-	string puzz[n][n];
-
-	cout<<"Enter size of Parking"<<endl;
-	cin>>n;
-
-	for(int i = 0 ; i<20;i++)
-		for(int j = 0;j<20;j++)
-			puzz[i][j] = "  ";
+public :
 
 
-	//	myScenario((string *)puzz);
-
-	displayParkingLayout((string *)puzz,n);
-	char ch = 'y';
-	while(ch == 'y' || ch == 'Y')
+	void StartOp()
 	{
+		cout<<"Enter size of Parking"<<endl;
+		cin>>n;
 
-		cout<<" Press P for Parking R for Retrieval E for Exit "<<endl;
-		char option;
-		cin>>option;
+		for(int i = 0 ; i<MAX;i++)
+			for(int j = 0;j<MAX;j++)
+				puzz[i][j] = "  ";
 
 
-		string carNo;
+		//	myScenario((string *)puzz);
 
-
-		if(option == 'E')
+		displayParkingLayout((string *)puzz,n);
+		char ch = 'y';
+		while(ch == 'y' || ch == 'Y')
 		{
-			exit(0);
-		}
-		if(option == 'P')
-		{
-			if(!getMeFreeBay((string *)puzz,n)) continue;
 
-			int BayNo; // 1-n-1
-			cout<<" Enter Bay No. from 1 to "<<n-1<<endl;
-			cin>>BayNo;
+			cout<<" Press P for Parking R for Retrieval E for Exit "<<endl;
+			char option;
+			cin>>option;
 
-			if(BayNo<1 || BayNo >n-1)
+
+			string carNo;
+
+
+			if(option == 'E')
 			{
-				cout<<"BayNo is not correct "<<endl;
-				continue;
+				exit(0);
 			}
-
-			cout<<" Enter Car no "<<endl;
-			cin>>carNo;
-
-			if(isThisCarParked((string *)puzz,n,carNo))
-				park((string *)puzz,n,carNo,BayNo-1);
-
-		}
-		if(option == 'R')
-		{
-			if(isAnyCarParked((string *)puzz,n))
+			if(option == 'P')
 			{
+				if(!getMeFreeBay((string *)puzz,n)) continue;
+
+				int BayNo; // 1-n-1
+				cout<<" Enter Bay No. from 1 to "<<n-1<<endl;
+				cin>>BayNo;
+
+				if(BayNo<1 || BayNo >n-1)
+				{
+					cout<<"BayNo is not correct "<<endl;
+					continue;
+				}
+
 				cout<<" Enter Car no "<<endl;
 				cin>>carNo;
 
-				Retrive((string *)puzz,n,carNo);
+				if(isThisCarParked((string *)puzz,n,carNo))
+					park((string *)puzz,n,carNo,BayNo-1);
+
 			}
+			if(option == 'R')
+			{
+				if(isAnyCarParked((string *)puzz,n))
+				{
+					cout<<" Enter Car no "<<endl;
+					cin>>carNo;
+
+					Retrive((string *)puzz,n,carNo);
+				}
+
+			}
+
+
+			displayParkingLayout((string *)puzz,n);
 
 		}
 
 
-		displayParkingLayout((string *)puzz,n);
+		return;
+	}
+
+	void myScenario(string *slot)
+	{
+		string puzzle[4][4] = {
+				{"01","04","07","  "},
+				{"02","05","  ","08"},
+				{"03","06","  ","09"},
+				{"  ","  ","  ","  "}};
+
+		for(int i = 0; i<4;i++)
+			for(int j = 0;j<4;j++)
+				*(slot+i*4 +j) = puzzle[i][j];
 
 	}
+
+	Process_ParkingMgmt(sc_module_name name, int layoutSize ) :sc_module(name)
+	{
+
+		n = layoutSize;
+		SC_THREAD(StartOp);
+	}
+	SC_HAS_PROCESS(Process_ParkingMgmt);
+};
+
+int sc_main(int argc, char* argv[])
+{
+
+
+	srand(time(NULL));
+	sc_set_time_resolution(1, SC_SEC);
+
+	Process_ParkingMgmt oMainProcess((char *)"PUZZ",15);
+
+	sc_start ();
+
+	return 0;
 
 
 }
