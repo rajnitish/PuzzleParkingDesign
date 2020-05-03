@@ -37,7 +37,7 @@ void displayParkingLayout(string *value,int n)
 	printf("\n");
 }
 
-struct yx findNextAvilSlot(string *slot,int n,int data)
+/*struct yx findNextAvilSlot(string *slot,int n,int data)
 {
 	for(int i = 0; i<n;i++)
 		for(int j = 0;j<n;j++)
@@ -50,7 +50,7 @@ struct yx findNextAvilSlot(string *slot,int n,int data)
 
 	yx obj(-1,-1);
 	return obj;
-}
+}*/
 
 bool isSlotSafe(string *slot,int n, yx obj)
 {
