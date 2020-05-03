@@ -70,7 +70,6 @@ bool isSlotSafe(string *slot,int n, yx obj)
 
 	if(K < 2)
 	{
-		//cout<<"Can't adjust to this Bay, Contact Parking Manager "<<endl;
 		return false;
 	}
 
